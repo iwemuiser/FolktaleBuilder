@@ -73,18 +73,14 @@ class FolktaleBuilderPlugin extends Omeka_Plugin_AbstractPlugin
         $acl->allow("contributor", "Items", array('makePublic', "edit"));
         
         $acl->deny("admin", "Collections", 'delete');
-        $acl->deny("admin", "Users");
-        $acl->allow("admin", "Users");
+
+#        $acl->allow("admin", array("Users"));
+        $acl->allow("admin", array("Users", "Plugins"));
+
 #        $acl->allow(array('super', 'admin', 'contributor'), array('FolktaleBuilder_Index'));
         
         #nieuwe gebruiker aanmaken
-#        $acl->addRole('invoerder', 'contributor');
-#        $acl->allow('invoerder', 'Items', array('add', 'tag', 'batch-edit', 'batch-edit-save', 
-#                                                  'delete-confirm', 'editSelf', 'deleteSelf', 
-#                                                  'showSelfNotPublic', 'makePublic', 'edit'));
 
-        $acl->allow('admin', array( 'Plugins'));
-        
 #        $pageResource = new Zend_Acl_Resource('FolktaleBuilder_Page');
 #        $acl->add($pageResource);
 #        $acl->allow(array('super', 'admin'), 'FolktaleBuilder_Page', array('add', 'build'));
@@ -110,30 +106,18 @@ class FolktaleBuilderPlugin extends Omeka_Plugin_AbstractPlugin
     
     
     /**
-     * Append routes that render element text form input.
-     *
-     * @param array $routes
-     * @return array
-     */
-    public function filterSimpleVocabRoutes($routes)
-    {
-       
-        $routes[] = array('module' => 'folktale-builder',
-                          'controller' => 'folktale-builder',
-                          'actions' => array('type-form', 'build'));
-        return $routes;
-    }
-    
-    
-    /**
      * Appends some more stats to the dashboard
      * 
      * @return void
      **/
     function filterAdminDashboardStats($stats)
     {
-    	$collection = get_record_by_id('Collection', 1);
-    	$stats[] = array(link_to($collection, null, metadata($collection, 'total_items')), __('folktales'));
+    	$vvcollection = get_record_by_id('Collection', 1);
+    	$stats[] = array(link_to($vvcollection, null, metadata($vvcollection, 'total_items')), __('Volksverhalen'));
+    	$pcollection = get_record_by_id('Collection', 4);
+    	$stats[] = array(link_to($pcollection, null, metadata($pcollection, 'total_items')), __('Vertellers'));
+    	$tpcollection = get_record_by_id('Collection', 3);
+    	$stats[] = array(link_to($tpcollection, null, metadata($tpcollection, 'total_items')), __('Verhaaltypen'));
         return $stats;
     }
 
@@ -153,9 +137,30 @@ class FolktaleBuilderPlugin extends Omeka_Plugin_AbstractPlugin
         $panels2[] = $this->_addDashboardBrowseEtc($panels);
         $panels2[] = $this->_addDashboardSearchEtc($panels);
         $panels2[] = $this->_pimped_recent_items();
+#        $panels2[] = $this->_active_users();
         return $panels2;
 
     }
+
+/*    function _active_users(){
+        $users = get_db()->getTable('Users');
+        $recent_html = '<h2>' . __('Actieve gebruikers') . '</h2>';
+#        set_loop_records('users', get_recent_items(10));
+        foreach ($users as $key => $user){
+#         foreach( $users as $key => $user )
+            $recent_html .= '<div class="recent-row">';
+            $recent_html .= '<p class="recent">' . $user->username . ' - '.  '</p>';
+            print_r($key);
+#             $recent_html .= '<p class="recent">' . (metadata($item, 'item_type_name') ? metadata($item, 'item_type_name') : "NO ITEMTYPE!") . 
+#                             " in " . (metadata($item, 'collection_name') ? metadata($item, 'collection_name') : "NO COLLECTION !") . '</p>';
+#             if (is_allowed($item, 'edit')){
+#                 $recent_html .= '<p class="dash-edit">' . link_to_item(__('Edit'), array(), 'edit') . '</p>';
+#             }
+            $recent_html .= '</div>';
+        }
+        return $recent_html;
+    }
+*/
 
     function _pimped_recent_items(){
         $recent_html = '<h2>' . __('Recent Items') . '</h2>';
@@ -172,50 +177,53 @@ class FolktaleBuilderPlugin extends Omeka_Plugin_AbstractPlugin
             }
         return $recent_html;
     }
-    
-/*
-    <?php ob_start(); ?>
-    <h2><?php echo __('Recent Collections'); ?></h2>
-    <?php
-        $collections = get_recent_collections(5);
-        set_loop_records('collections', $collections);
-        foreach (loop('collections') as $collection):
-    ?>
-        <div class="recent-row">
-            <p class="recent"><?php echo link_to_collection(); ?></p>
-            <?php if (is_allowed($collection, 'edit')): ?>
-            <p class="dash-edit"><?php echo link_to_collection(__('Edit'), array(), 'edit'); ?></p>
-            <?php endif; ?>
-        </div>
-    <?php endforeach; ?>
-        <?php if (is_allowed('Collections', 'add')): ?>
-        <div class="add-new-link"><p><a class="add-collection" href="<?php echo html_escape(url('collections/add')); ?>"><?php echo __('Add a new collection'); ?></a></p></div>
-        <?php endif; ?>
-    <?php $panels[] = ob_get_clean(); ?>
 
-    <?php $panels = apply_filters('admin_dashboard_panels', $panels, array('view' => $this)); ?>
-    <?php for ($i = 0; $i < count($panels); $i++): ?>
-    <section class="five columns <?php echo ($i & 1) ? 'omega' : 'alpha'; ?>">
-        <div class="panel">
-            <?php echo $panels[$i]; ?>
-        </div>
-    </section>
-    <?php endfor; ?>*/
 
     function _addDashboardSearchEtc($panels){
 #        $db = get_db();
+
         $zoeken_html = "<H1>Snelzoeken</H1><br>";
+        
+        $zoeken_html .= '<H2>Zoek in Volksverhalen</H2>';
+        
         $zoeken_html .= '<form id="' . url(array('controller'=>'items', 'action'=>'browse')). '" action="/vb/admin/items/browse" method="GET">';
-        $zoeken_html .= '<label>Zoek in Volksverhaal : tekst</label>';
+        $zoeken_html .= '<label>Zoek in tekst</label><br>';
         $zoeken_html .= '<input type="hidden" name="advanced[0][element_id]" id="advanced[0][element_id]" value="1">';
         $zoeken_html .= '<input type="hidden" name="advanced[0][type]" id="advanced[0][type]" value="contains">';
+        $zoeken_html .= '<input type="hidden" name="collection" id="collection" value="3" >';
         $zoeken_html .= '<input type="text" name="advanced[0][terms]" id="advanced[0][terms]" value="" size="30">';
         $zoeken_html .= '<input type="submit" class="submit small green button" name="submit_search" id="submit_search_advanced" value="';
         $zoeken_html .= __('search') . '">';
         $zoeken_html .= "</form>";
 
         $zoeken_html .= '<form id="' . url(array('controller'=>'items', 'action'=>'browse')). '" action="/vb/admin/items/browse" method="GET">';
-        $zoeken_html .= '<label>Zoek in Verhaaltypen : beschrijving</label>';
+        $zoeken_html .= '<label>Zoek in tags</label><br>';
+        $zoeken_html .= '<input type="hidden" name="advanced[0][element_id]" id="advanced[0][element_id]" value="">';
+        $zoeken_html .= '<input type="hidden" name="collection" id="collection" value="1" >';
+        $zoeken_html .= '<input type="text" name="tags" id="tags" value="" size="30">';
+        $zoeken_html .= '<input type="submit" class="submit small green button" name="submit_search" id="submit_search_advanced" value="';
+        $zoeken_html .= __('search') . '">';
+        $zoeken_html .= "</form>";
+
+        /*zoeken in velden 63 65 66 (exclusive)*/
+        $zoeken_html .= '<form id="' . url(array('controller'=>'items', 'action'=>'browse')). '" action="/vb/admin/items/browse" method="GET">';
+        $zoeken_html .= '<label>Zoek in named entities</label><br>';
+        $zoeken_html .= '<select name="advanced[0][element_id]" id="advanced[0][element_id]" style="width: 140px">
+                            <option value="63">Generiek (oud)</option>
+                            <option value="66">Namen</option>
+                            <option value="65">Plaatsen</option>
+                        </select>';
+#        $zoeken_html .= '<input type="hidden" name="advanced[0][element_id]" id="advanced[0][element_id]" value="63">';
+        $zoeken_html .= '<input type="hidden" name="advanced[0][type]" id="advanced[0][type]" value="contains">';
+        $zoeken_html .= '<input type="text" name="advanced[0][terms]" id="advanced[0][terms]" value="" size="10">';
+        $zoeken_html .= '<input type="submit" class="submit small green button" name="submit_search" id="submit_search_advanced" value="';
+        $zoeken_html .= __('search') . '">';
+        $zoeken_html .= "</form>";
+
+        $zoeken_html .= '<H2>Zoek in Verhaaltypen</H2>';
+        
+        $zoeken_html .= '<form id="' . url(array('controller'=>'items', 'action'=>'browse')). '" action="/vb/admin/items/browse" method="GET">';
+        $zoeken_html .= '<label>Beschrijving</label><br>';
         $zoeken_html .= '<input type="hidden" name="advanced[0][element_id]" id="advanced[0][element_id]" value="41" >';
         $zoeken_html .= '<input type="hidden" name="advanced[0][type]" id="advanced[0][type]" value="contains" >';
         $zoeken_html .= '<input type="hidden" name="collection" id="collection" value="3" >';
@@ -223,9 +231,21 @@ class FolktaleBuilderPlugin extends Omeka_Plugin_AbstractPlugin
         $zoeken_html .= '<input type="submit" class="submit small green button" name="submit_search" id="submit_search_advanced" value="';
         $zoeken_html .= __('search') . '">';
         $zoeken_html .= "</form>";
+
+        $zoeken_html .= '<form id="' . url(array('controller'=>'items', 'action'=>'browse')). '" action="/vb/admin/items/browse" method="GET">';
+        $zoeken_html .= '<label>Verhaaltypenummer (Aanduiding)</label>';
+        $zoeken_html .= '<input type="hidden" name="advanced[0][element_id]" id="advanced[0][element_id]" value="43" >';
+        $zoeken_html .= '<input type="hidden" name="advanced[0][type]" id="advanced[0][type]" value="contains" >';
+        $zoeken_html .= '<input type="hidden" name="collection" id="collection" value="3" >';
+        $zoeken_html .= '<input type="text" name="advanced[0][terms]" id="advanced[0][terms]" value="" size="30">';
+        $zoeken_html .= '<input type="submit" class="submit small green button" name="submit_search" id="submit_search_advanced" value="';
+        $zoeken_html .= __('search') . '">';
+        $zoeken_html .= "</form>";
+
+        $zoeken_html .= '<H2>Zoek in Vertellers</H2>';
         
         $zoeken_html .= '<form id="' . url(array('controller'=>'items', 'action'=>'browse')). '" action="/vb/admin/items/browse" method="GET">';
-        $zoeken_html .= '<label>Zoek een Verteller op naam</label>';
+        $zoeken_html .= '<label>Op naam</label><br>';
         $zoeken_html .= '<input type="hidden" name="advanced[0][element_id]" id="advanced[0][element_id]" value="50" >';
         $zoeken_html .= '<input type="hidden" name="advanced[0][type]" id="advanced[0][type]" value="contains" >';
         $zoeken_html .= '<input type="hidden" name="collection" id="collection" value="4" >';
@@ -235,6 +255,19 @@ class FolktaleBuilderPlugin extends Omeka_Plugin_AbstractPlugin
         $zoeken_html .= "</form>";
 
     	return $zoeken_html;
+    }
+
+    function _verhaaltype_lijst($maker){
+        return url(array('module'=>'items','controller'=>'browse'), 
+                                'default',
+                                array("search" => "",
+                                    "submit_search" => "Zoeken",
+                                    "collection" => "3",
+                                    "advanced[0][element_id]" => "39",
+                                    "advanced[0][type]" => "is exactly",
+                                    "advanced[0][terms]" => $maker,
+                                    )
+                                );
     }
 
     function _addDashboardBrowseEtc($panels){
@@ -253,19 +286,52 @@ class FolktaleBuilderPlugin extends Omeka_Plugin_AbstractPlugin
                                     "public" => "0",
                                     )
                                 );
-        
+        $public_tales_browse = url(array('module'=>'items','controller'=>'browse'), 
+                                'default',
+                                array("search" => "",
+                                    "submit_search" => "Zoeken",
+                                    "collection" => "1",
+                                    "public" => "1",
+                                    )
+                                );
+        $own_tales_browse = url(array('module'=>'items','controller'=>'browse'), 
+                                'default',
+                                array("search" => "",
+                                    "submit_search" => "Zoeken",
+                                    "collection" => "1",
+                                    "user" => current_user()->id
+                                    )
+                                );
         $item_toevoegen = 
         $folktale_html = "";
         $folktale_html .= "<H1>Volksverhalenbank functies</H1><br>";
-
-        $folktale_html .= "<H2> <a href = '$all_tales_browse'>Browse <b>alle</b> volksverhalen</a></H2>";
-        $folktale_html .= "<H2> <a href = '$private_tales_browse'>Browse <b>prive</b> volksverhalen</H2>";
-        
-        $folktale_html .= "<br><br>";
         $folktale_html .= "<a class='small blue advanced-search-link button' href='/vb/admin/items/search'>Geavanceerd zoeken</a>";
-        $folktale_html .= "<br>";
-        $folktale_html .= "<a href='/vb/admin/items/add' class='add button small green'>Voeg een item toe</a>";
+        $folktale_html .= "<a href='/vb/admin/items/add' class='add button small green'>Voeg een item toe</a><br>";
 
+        $folktale_html .= "<H2>Invoer hulp websites / lijsten</H2><br>";
+        $folktale_html .= '<UL STYLE="list-style-type: disc;">';
+        $folktale_html .= "<li><a href = 'http://www.dinor.demon.nl/Thompson/'>Browse/zoek <b>Thompson movieven</b> (website Dirk Kramer)</a><br>";
+        $folktale_html .= "<li><a href = 'http://www.meertens.knaw.nl/kloeke/'>Zoek <b>Kloeke nummers</b> (website Meertens)</a><br>";
+        $folktale_html .= "</UL><br>";
+                
+        $folktale_html .= "<H2>Volksverhalen lijsten</H2><br>";
+        $folktale_html .= '<UL STYLE="list-style-type: disc;">';
+        $folktale_html .= "<li><a href = '$all_tales_browse'>Browse <b>alle</b> volksverhalen</a><br>";
+        $folktale_html .= "<li><a href = '$private_tales_browse'>Browse <b>prive</b> volksverhalen</a><br>";
+        $folktale_html .= "<li><a href = '$public_tales_browse'>Browse <b>publieke</b> volksverhalen</a><br>";
+        $folktale_html .= "<li><a href = '$own_tales_browse'>Browse <b>zelf toegevoegde</b> volksverhalen</a><br>";
+        $folktale_html .= "</ul><br>";
+        
+        $folktale_html .= "<H2>Volksverhaaltype lijsten</H2><br>";
+        $folktale_html .= '<UL STYLE="list-style-type: disc;">';
+        $folktale_html .= "<li><a href = '".$this->_verhaaltype_lijst("Theo Meder")."'>Browse <b>Theo Meder</b> Verhaaltypen</a><br>";
+        $folktale_html .= "<li><a href = '".$this->_verhaaltype_lijst("ATU")."'>Browse <b>ATU</b> Verhaaltypen</a><br>";
+        $folktale_html .= "<li><a href = '".$this->_verhaaltype_lijst("Aarne Thompson")."'>Browse <b>Aarne Thompson</b> Verhaaltypen</a><br>";
+        $folktale_html .= "<li><a href = '".$this->_verhaaltype_lijst("Brunvand")."'>Browse <b>Brunvand</b> Verhaaltypen</a><br>";
+        $folktale_html .= "<li><a href = '".$this->_verhaaltype_lijst("Sinninghe")."'>Browse <b>Sinninghe</b> Verhaaltypen</a><br>";
+        $folktale_html .= "<li><a href = '".$this->_verhaaltype_lijst("Van der Kooi")."'>Browse <b>Van der Kooi</b> Verhaaltypen</a><br>";
+        $folktale_html .= "</UL><br>";
+    
         return $folktale_html;
     }
 
