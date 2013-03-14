@@ -308,10 +308,11 @@ class FolktaleBuilderPlugin extends Omeka_Plugin_AbstractPlugin
         $folktale_html .= "<a class='small blue advanced-search-link button' href='/vb/admin/items/search'>Geavanceerd zoeken</a>";
         $folktale_html .= "<a href='/vb/admin/items/add' class='add button small green'>Voeg een item toe</a><br>";
 
-        $folktale_html .= "<H2>Invoer hulp websites / lijsten</H2><br>";
+        $folktale_html .= "<H2>Invoerhulp websites / lijsten</H2><br>";
         $folktale_html .= '<UL STYLE="list-style-type: disc;">';
-        $folktale_html .= "<li><a href = 'http://www.dinor.demon.nl/Thompson/'>Browse/zoek <b>Thompson movieven</b> (website Dirk Kramer)</a><br>";
-        $folktale_html .= "<li><a href = 'http://www.meertens.knaw.nl/kloeke/'>Zoek <b>Kloeke nummers</b> (website Meertens)</a><br>";
+        $folktale_html .= "<li><a target='manual' href='http://bookstore.ewi.utwente.nl/docs/Handleiding%20Nieuwe%20Volksverhalenbank%20Versie%202.pdf'><b>Handleiding</b> invoer Nederlandse Volksverhalenbank</a><br>";
+        $folktale_html .= "<li><a target='motieven' href='http://www.dinor.demon.nl/Thompson/'>Browse/zoek <b>Thompson movieven</b> (website Dirk Kramer)</a><br>";
+        $folktale_html .= "<li><a target='kloekenummers' href='http://www.meertens.knaw.nl/kloeke/'>Zoek <b>Kloeke nummers</b> (website Meertens)</a><br>";
         $folktale_html .= "</UL><br>";
                 
         $folktale_html .= "<H2>Volksverhalen lijsten</H2><br>";
