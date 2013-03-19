@@ -11,13 +11,13 @@
  *
  * @package MetaMetaData
  */
-class FolktaleBuilder_IndexController extends Omeka_Controller_AbstractActionController
+class FolktaleAnnotator_IndexController extends Omeka_Controller_AbstractActionController
 {    
     public function init()
     {
         // Set the model class so this controller can perform some functions, 
         // such as $this->findById()
-        $this->_helper->db->setDefaultModelName('FolktaleBuilder');
+        $this->_helper->db->setDefaultModelName('FolktaleAnnotator');
     }
     
     public function indexAction()
